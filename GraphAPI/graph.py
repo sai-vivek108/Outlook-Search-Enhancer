@@ -11,6 +11,7 @@ from msgraph.generated.models.item_body import ItemBody
 from msgraph.generated.models.body_type import BodyType
 from msgraph.generated.models.recipient import Recipient
 from msgraph.generated.models.email_address import EmailAddress
+from datetime import datetime
 
 class Graph:
     settings: SectionProxy
@@ -45,15 +46,58 @@ class Graph:
         user = await self.user_client.me.get(request_configuration=request_config)
         return user
     
-    async def get_inbox(self):
-        query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
-            # Only request specific properties
-            select=['from', 'isRead', 'receivedDateTime', 'subject', 'body'],
-            # Get at most 25 results
-            top=25,
-            # Sort by received time, newest first
-            orderby=['receivedDateTime DESC']
-        )
+    # async def get_thread_count(self, conversation_id):
+    #     if conversation_id:
+    #         threads = await self.user_client.me.conversations[conversation_id].threads.get()
+    #         return len(threads.get('value', []))
+
+    #     return 0
+
+    async def get_thread_count(self, conversation_id):
+        if conversation_id:
+            try:
+                # Replace `custom_get_request` with the actual method to perform a GET request.
+                response = await self.user_client.custom_get_request(f'/me/conversations/{conversation_id}/threads')
+                threads_data = await response.json()  # Assuming the response needs to be parsed from JSON
+                return len(threads_data.get('value', []))
+            except Exception as e:
+                print(f"Failed to retrieve threads for conversation {conversation_id}: {str(e)}")
+                return 0
+        return 0
+
+    # async def get_inbox(self):
+    #     query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+    #         # Only request specific properties
+    #         select=['from', 'isRead', 'receivedDateTime', 'subject', 'body'],
+    #         # Get at most 25 results
+    #         top=25,
+    #         # Sort by received time, newest first
+    #         orderby=['receivedDateTime DESC']
+    #     )
+    #     request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
+    #         query_parameters= query_params
+    #     )
+
+    #     messages = await self.user_client.me.mail_folders.by_mail_folder_id('inbox').messages.get(
+    #             request_configuration=request_config)
+    #     return messages
+    
+    async def get_inbox(self, last_save_info):
+        if last_save_info:
+            last_run_time = last_save_info.get("last_procTime")
+            filter_query = f"receivedDateTime ge {last_run_time} and receivedDateTime le {datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')}"
+            query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+                select=['id', 'from', 'toRecipients', 'ccRecipients', 'isRead', 'receivedDateTime', 'subject', 'body', 'conversationId'],
+                top=50,
+                orderby=['receivedDateTime ASC'], 
+                filter=filter_query
+            )
+        else:
+            query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+                select=['id', 'from', 'toRecipients', 'ccRecipients', 'isRead', 'receivedDateTime', 'subject', 'body', 'conversationId'],
+                top=50,
+                orderby=['receivedDateTime ASC']
+            )
         request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
             query_parameters= query_params
         )
@@ -62,13 +106,23 @@ class Graph:
                 request_configuration=request_config)
         return messages
 
-    async def get_deleted_items(self):
-        # This method is similar to get_inbox, but fetches messages from deletedItems folder
-        query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
-            select=['from', 'isRead', 'receivedDateTime', 'subject', 'body'],
-            top=25,
-            orderby=['receivedDateTime DESC']
-        )
+    async def get_deleted_items(self,last_save_info):
+        if last_save_info:
+            last_run_time = last_save_info.get("last_procTime")
+            filter_query = f"receivedDateTime ge {last_run_time} and receivedDateTime le {datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')}"
+            query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+                select=['id', 'from', 'toRecipients', 'ccRecipients', 'isRead', 'receivedDateTime', 'subject', 'body', 'conversationId'],
+                top=50,
+                orderby=['receivedDateTime DESC'], 
+                filter=filter_query
+            )
+        else:
+            query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+                select=['id', 'from', 'toRecipients', 'ccRecipients', 'isRead', 'receivedDateTime', 'subject', 'body', 'conversationId'],
+                top=50,
+                orderby=['receivedDateTime DESC']
+            )
+
         request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
             query_parameters=query_params
         )
@@ -77,23 +131,14 @@ class Graph:
             request_configuration=request_config
         )
 
-        if messages_page and messages_page.value:
-            all_messages.extend(messages_page.value)
-
-        while messages_page and messages_page.odata_next_link:
-            # Create a new MessagesRequestBuilder from the next link
-            next_page_builder = MessagesRequestBuilder(self.user_client.request_adapter, messages_page.odata_next_link)
-            messages_page = await next_page_builder.get()
-            
-            # messages_page = await self.user_client.me.mail_folders.by_mail_folder_id('deleteditems').messages.get(
-            #     next_link=messages_page.odata_next_link
-            # )
-            if messages_page and messages_page.value:
+        # Process pages of messages
+        while messages_page:
+            if messages_page.value:
                 all_messages.extend(messages_page.value)
+            if messages_page.odata_next_link:
+                next_page_builder = MessagesRequestBuilder(self.user_client.request_adapter, messages_page.odata_next_link)
+                messages_page = await next_page_builder.get()
+            else:
+                break
 
         return all_messages
-
-        # messages = await self.user_client.me.mail_folders.by_mail_folder_id('deleteditems').messages.get(
-        #     request_configuration=request_config
-        # )
-        # return messages
