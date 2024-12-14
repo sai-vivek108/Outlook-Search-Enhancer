@@ -296,6 +296,7 @@ def main():
     # "Give me the emails about the budget from last month"
     # "Retrieve emails mentioning the meeting on Friday"
     sends, recieve, results = query_emails("Show me emails from prime last week")
+    
     # print("Results:", results)
     # print("Top sender:", sends)
     # print("Top recipient:", recieve)
