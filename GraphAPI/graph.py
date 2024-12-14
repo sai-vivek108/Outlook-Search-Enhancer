@@ -46,17 +46,9 @@ class Graph:
         user = await self.user_client.me.get(request_configuration=request_config)
         return user
     
-    # async def get_thread_count(self, conversation_id):
-    #     if conversation_id:
-    #         threads = await self.user_client.me.conversations[conversation_id].threads.get()
-    #         return len(threads.get('value', []))
-
-    #     return 0
-
     async def get_thread_count(self, conversation_id):
         if conversation_id:
             try:
-                # Replace `custom_get_request` with the actual method to perform a GET request.
                 response = await self.user_client.custom_get_request(f'/me/conversations/{conversation_id}/threads')
                 threads_data = await response.json()  # Assuming the response needs to be parsed from JSON
                 return len(threads_data.get('value', []))
@@ -64,23 +56,6 @@ class Graph:
                 print(f"Failed to retrieve threads for conversation {conversation_id}: {str(e)}")
                 return 0
         return 0
-
-    # async def get_inbox(self):
-    #     query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
-    #         # Only request specific properties
-    #         select=['from', 'isRead', 'receivedDateTime', 'subject', 'body'],
-    #         # Get at most 25 results
-    #         top=25,
-    #         # Sort by received time, newest first
-    #         orderby=['receivedDateTime DESC']
-    #     )
-    #     request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
-    #         query_parameters= query_params
-    #     )
-
-    #     messages = await self.user_client.me.mail_folders.by_mail_folder_id('inbox').messages.get(
-    #             request_configuration=request_config)
-    #     return messages
     
     async def get_inbox(self, last_save_info):
         if last_save_info:

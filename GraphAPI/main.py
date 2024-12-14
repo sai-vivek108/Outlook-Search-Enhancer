@@ -4,7 +4,7 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from graph import Graph
 from datetime import datetime
 import json, os
-# from html2text import HTML2Text
+
 import json
 def load_laststate(state_file = "last_sate.json", ):
     if os.path.exists(state_file):
@@ -114,24 +114,6 @@ async def list_inbox(graph: Graph):
                 file.write("from: \t"+from_email+'\n')
                 file.write("to: \t"+(" ".join(to_emails) if cc_emails else '')+'\n')
                 file.write("cc: \t"+(" ".join(cc_emails) if cc_emails else '')+'\n\n')
-
-            # print()
-        #     print('Message:', message.subject)
-        #     if (message.from_ and
-        #         message.from_.email_address):
-        #         print('  From:', message.from_.email_address.name or 'NONE')
-        #     else:
-        #         print('  From: NONE')
-        #     print('  Status:', 'Read' if message.is_read else 'Unread')
-        #     print('  Received:', message.received_date_time)
-        #     if message.body.content:
-        #         print(message.body.content)
-        #         print('Message body: ', html2text(message.body.content))
-
-        # # If @odata.nextLink is present
-        # more_available = message_page.odata_next_link is not None
-        # print('\nMore messages available?', more_available, '\n')
-        # run_state()
 
 async def get_thread_count(self, conversation_id):
     if conversation_id:
