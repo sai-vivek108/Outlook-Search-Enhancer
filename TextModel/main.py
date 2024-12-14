@@ -18,7 +18,7 @@ from nltk.corpus import wordnet
 from dateutil.parser import parse as dateutil_parse
 
 # Constants
-INDEX_DIR = "EmailIndex_new"
+INDEX_DIR = "../WhooshEmailIndex"
 MAIN_DATA_FILE = "cleaned_data.jsonl"
 
 nlp = spacy.load("en_core_web_trf")
@@ -296,9 +296,10 @@ def main():
     # "Give me the emails about the budget from last month"
     # "Retrieve emails mentioning the meeting on Friday"
     sends, recieve, results = query_emails("Show me emails from prime last week")
-    print("Results:", results)
-    print("Top sender:", sends)
-    print("Top recipient:", recieve)
+    
+    # print("Results:", results)
+    # print("Top sender:", sends)
+    # print("Top recipient:", recieve)
 
 if __name__ == "__main__":
     main()
