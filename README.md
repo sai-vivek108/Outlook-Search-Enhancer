@@ -13,6 +13,10 @@ The system also supports advanced analytics, such as identifying the top emailed
 
 ---
 
+## Demo
+![Demo Video](FinalDemo1.mp4)
+
+---
 ## Project Structure
 
 The project is organized into the following key folders and files:
